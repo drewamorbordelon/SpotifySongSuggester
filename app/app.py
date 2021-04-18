@@ -1,10 +1,37 @@
+import json
+import sqlite3
+import os
+import pandas as pd
+
 from flask import Flask, render_template, request, url_for, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_bootstrap import Bootstrap
-import json
-import sqlite3
-import os
+from os import getenv
+
+
+
+# def create_app():
+#     app = Flask(__name__)
+
+#     Bootstrap(app)
+#     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///db.sqlite3"
+#     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#     DB = SQLAlchemy(app)
+#     DB.init_app(app)
+#     app.config['SECRET_KEY'] = '<SECRET_KEY>'
+#     csrf = CSRFProtect(app)
+
+#     @app.route('/', methods=['GET'])
+#     def dropdown():
+
+#         return render_template('base.html')
+
+    
+#     @app.route('/predict', methods=['GET', 'POST'])
+#     def home():
+#         template = render_template('predict.html', title="Branching out on your music quest")
+#         songs = render_10(request.values['Searched_Song'])
 
 DB_FILE = 'data/db.sqlite3'
 
@@ -80,7 +107,7 @@ def create_app():
     @app.routes('/api', method=['POST'])
     def api():
 
-        data_in = request.get_json(forece=True)
+        data_in = request.get_json(force=True)
 
         try:
             # Create database connection
@@ -93,5 +120,16 @@ def create_app():
                 return f"Index Error for: {data_in}"
             
             # Find similar songs
+            query = "SELECT * FROM recommendations WHERE Searched_Song == '{}'".format(
+                track_id)
 
-    
+            similar_songs = select_query(conn, query)
+            similar_songs_dict = similar_songs.to_dict(orient='records')[0]
+
+            return jsonify(similar_songs_dict)
+
+        except Exception as e:
+            print(e)
+            return f"Can't find the track id of Searched_Song {data_in}"
+
+    return app
